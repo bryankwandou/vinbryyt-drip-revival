@@ -4,6 +4,12 @@ import requests
 from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
+import sys
+from pathlib import Path
+
+# Add the script's directory to sys.path to ensure imports work when run from root
+sys.path.append(str(Path(__file__).parent))
+
 from utils import ensure_dir
 
 # Load environment variables
