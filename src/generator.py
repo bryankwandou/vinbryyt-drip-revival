@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 
 # Add the script's directory to sys.path
 sys.path.append(str(Path(__file__).parent))
-from utils import ensure_dir
 
 # Load environment variables
 load_dotenv()
@@ -110,8 +109,10 @@ def main():
             print("🚀 Pipeline execution completed successfully!")
         else:
             print("❌ Failed to save image.")
+            sys.exit(1)
     else:
         print("❌ Failed to generate image URL.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

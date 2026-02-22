@@ -36,7 +36,11 @@ jobs:
         git config --global user.name "VinBryYT-Bot"
         git config --global user.email "bot@vinbryyt.com"
         git add assets/ metadata/
-        git commit -m "🎨 Autonomous Revival Art: $(date +'%Y-%m-%d %H:%M:%S')"
-        git push
+        if [ -n "$(git status --porcelain)" ]; then
+          git commit -m "🎨 Autonomous Revival Art: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
+        else
+          echo "No changes to commit"
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
