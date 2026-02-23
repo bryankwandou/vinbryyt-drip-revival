@@ -91,7 +91,14 @@ def generate_hourly_drop():
         print("Required API keys missing (GROQ_API_KEY/OPENAI_API_KEY or HF_TOKEN).")
         return
 
-    theme = random.choice(THEMES)
+    # Filter themes based on history to ensure repetition-free drops
+    history = get_history()
+    recent_themes = [h.get("theme") for h in list(history.values())[-3:]] # Last 3 themes
+    available_themes = [t for t in THEMES if t not in recent_themes]
+    
+    if not available_themes: available_themes = THEMES # Reset if all used
+    theme = random.choice(available_themes)
+    
     drop_id = datetime.now().strftime("%Y%m%d_%H%M")
     
     print(f"🚀 Starting Hourly Drop: {theme} (ID: {drop_id})")
@@ -155,16 +162,30 @@ def generate_hourly_drop():
     print(f"🚀 Hourly Drop #{drop_id} Complete!")
 
 def main():
+    """
+    Project Chronos Master Scheduler logic.
+    - XX:00 -> generate_hourly_drop()
+    - XX:30 -> generate_social_post()
+    """
     ensure_dir(ASSETS_DIR)
     ensure_dir(METADATA_DIR)
     ensure_dir(DATABASE_DIR)
     
     minute = datetime.now().minute
-    if minute < 15 or (minute >= 30 and minute < 45):
-        # Top of the hour or close to it: Hourly Drop
+    
+    # Logic for 30-minute schedule
+    # 0-15: Hourly Drop (Image + Blink)
+    # 30-45: Social Post Only
+    # Others (manual): Run both for demo purposes
+    
+    if minute < 15:
         generate_hourly_drop()
+    elif 30 <= minute < 45:
+        generate_social_post()
     else:
-        # Half hour: Social Post
+        # Manual trigger or unexpected time: Do both for maximum yield
+        print("⚡ Manual Trigger Detected: Executing Dual Chronos Protocol")
+        generate_hourly_drop()
         generate_social_post()
 
 if __name__ == "__main__":
