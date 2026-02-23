@@ -37,6 +37,7 @@ jobs:
       run: |
         git config --global user.name "VinBryYT-Chronos-Bot"
         git config --global user.email "chronos@vinbryyt.com"
+        touch community_posts.log # Ensure file exists for git add
         git add assets/ metadata/ database/ community_posts.log
         if [ -n "$(git status --porcelain)" ]; then
           git commit -m "🤖 [Chronos Antonomy] Update: $(date +'%Y-%m-%d %H:%M')"
