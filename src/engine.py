@@ -74,7 +74,7 @@ def generate_social_post():
                 },
                 {"role": "user", "content": f"Generate a {post_type} for the community."}
             ],
-            model="llama3-8b-8192",
+            model="llama-3.3-70b-versatile",
         )
         post = completion.choices[0].message.content
         with open("community_posts.log", "a", encoding="utf-8") as f:
@@ -118,22 +118,29 @@ def generate_hourly_drop():
                 },
                 {"role": "user", "content": f"Theme: {theme}"}
             ],
-            model="llama3-8b-8192",
+            model="llama-3.3-70b-versatile",
         )
         technical_prompt = prompt_completion.choices[0].message.content
     except Exception as e:
         print(f"Groq Prompt Error: {e}")
         technical_prompt = f"A masterpiece of {theme}, hyper-detailed digital art revival style, high fidelity, 8k"
 
-    # 2. FLUX.1 Image Generation (black-forest-labs/FLUX.1-schnell)
+    # 2. FLUX.1 Image Generation (Requests to Inference API for better compatibility)
     try:
         print(f"🎨 Generating image for theme: {theme}")
-        image = hf_client.text_to_image(
-            technical_prompt,
-            model="black-forest-labs/FLUX.1-schnell"
-        )
+        API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+        headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+        
+        response = requests.post(API_URL, headers=headers, json={"inputs": technical_prompt})
+        
+        if response.status_code != 200:
+            print(f"HF Error: {response.status_code} - {response.text}")
+            sys.exit(1)
+            
         img_path = os.path.join(ASSETS_DIR, f"drop_{drop_id}.png")
-        image.save(img_path)
+        with open(img_path, "wb") as f:
+            f.write(response.content)
+            
         print(f"✅ Image saved: {img_path}")
     except Exception as e:
         print(f"HF Generation Error: {e}")
