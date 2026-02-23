@@ -1,44 +1,39 @@
-# 🚀 VinBryYT: Autonomous Solana DRiP Revival Pipeline
+# 🤖 VinBryYT: Project Chronos (Project Revival Engine)
 
-VinBryYT is a 100% autonomous digital art revival channel, built for the **Solana Graveyard Hackathon 2026**. This repository contains a fully automated pipeline that generates high-fidelity AI art and DRiP-compliant cNFT metadata daily.
+Official submission for **Solana Graveyard Hackathon 2026**. VinBryYT is a 100% autonomous digital art revival channel, powered by an advanced AI engine and integrated with Solana Blinks.
 
-## 🛠 Technical Implementation
+## 🦾 Technical Architecture
 
-### 1. The AI Brain (`src/generator.py`)
-The core engine is a Python script that leverages **OpenAI DALL-E 3** to create unique "Revival" themed artwork. 
-- **Dynamic Prompting:** Generates a fresh prompt every 24 hours with cryptographic-style timestamps to ensure stylistic variety.
-- **DRiP cNFT Schema:** Automatically formats metadata into a standardized JSON structure that includes symbol (`VBRY`), royalty basis points, and relative image links.
+### 1. The Chronos Engine (`src/engine.py`)
+- **Text Engine**: Powered by **Groq API (Llama-3.3-70b)**. It handles prompt engineering, community posts, and creative writing (Pantun & Quotes).
+- **Image Engine**: Utilizes **Hugging Face Inference API** with the **FLUX.1-schnell** model to generate hyper-realistic, high-fidelity 8k visuals.
+- **Autonomous Schedule**:
+  - **On the hour (XX:00)**: Generates a new image drop, DRiP metadata, and Blink action.
+  - **On the half-hour (XX:30)**: Generates a community update, Pantun, or motivational quote.
 
-### 2. The Automation Engine (`.github/workflows/daily_revival.yml`)
-Powered by **GitHub Actions**, the pipeline runs on a daily CRON schedule (00:00 UTC).
-- **Environment Management:** Uses GitHub Secrets to securely store the `OPENAI_API_KEY`.
-- **Autonomous Persistence:** After generation, the bot automatically commits the new image (`/assets`) and metadata (`/metadata`) back to the main branch.
+### 2. Solana Blinks Integration (`src/blinks.py`)
+Every drop automatically generates **OrbitFlare (Blinks)** compliant JSON metadata. This allows users to "Tip Creator" or "Collect NFT" directly from any platform that supports Solana Blinks.
 
-### 3. Solana Integration
-The generated metadata follows the Metaplex standard used by DRiP, making these assets ready for minting as compressed NFTs (cNFTs) on the Solana blockchain.
+### 3. Smart Persistence
+- **`database/history.json`**: Tracks generated themes and timestamps to ensure zero repetition in the drops.
+- **`assets/` & `metadata/`**: Autonomous storage for images and Metaplex-standard metadata.
 
 ---
 
 ## 🚀 Deployment Instructions
 
-### 1. Configure Secrets
-1. Go to your GitHub Repository: `nayrbryanGaming/vinbryyt-drip-revival`.
-2. Navigate to **Settings > Secrets and Variables > Actions**.
-3. Click **New repository secret**.
-4. Name: `OPENAI_API_KEY`.
-5. Value: Your OpenAI API Key (starts with `sk-...`).
+### 1. Configure GitHub Secrets
+Add the following secrets to your repository (**Settings > Secrets and Variables > Actions**):
+- `OPENAI_API_KEY`: Your **Groq API Key** (mapped automatically).
+- `HF_TOKEN`: Your **Hugging Face Read Token**.
 
-### 2. Manual Test Run
-1. Navigate to the **Actions** tab in your repository.
-2. Select **Daily Revival Art Pipeline** on the left.
-3. Click the **Run workflow** dropdown.
-4. Click the green **Run workflow** button.
-
-### 3. Verification
-- Once the action completes, check the `assets/` folder for a new `.png`.
-- Check the `metadata/` folder for a matching `.json`.
+### 2. Manual Activation
+The engine runs automatically every 30 minutes. To test immediately:
+1. Go to the **Actions** tab.
+2. Select **Project Chronos Autonomy Engine**.
+3. Click **Run workflow**.
 
 ---
 
-**Developed for Solana Graveyard Hackathon 2026**
-*Reviving the digital soul, one block at a time.*
+**Built for the Future of Creative Autonomy on Solana.**
+*Reviving the soul, one block at a time.*

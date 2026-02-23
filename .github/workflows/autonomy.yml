@@ -1,12 +1,12 @@
-name: Daily Revival Art Pipeline
+name: Project Chronos Autonomy Engine
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Every day at 00:00 UTC
-  workflow_dispatch: # Allows manual trigger
+    - cron: '*/30 * * * *' # Every 30 minutes
+  workflow_dispatch:
 
 jobs:
-  build-and-generate:
+  run-chronos:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -25,22 +25,23 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run AI Art Generator
+    - name: Execute Chronos Engine
       env:
         GROQ_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
       run: |
-        python src/generator.py
+        python src/engine.py
 
-    - name: Commit and Push Changes
+    - name: Commit and Push Assets
       run: |
-        git config --global user.name "VinBryYT-Bot"
-        git config --global user.email "bot@vinbryyt.com"
-        git add assets/ metadata/
+        git config --global user.name "VinBryYT-Chronos-Bot"
+        git config --global user.email "chronos@vinbryyt.com"
+        git add assets/ metadata/ database/ community_posts.log
         if [ -n "$(git status --porcelain)" ]; then
-          git commit -m "🎨 Autonomous Revival Art: $(date +'%Y-%m-%d %H:%M:%S')"
+          git commit -m "🤖 Chronos Update: $(date +'%Y-%m-%d %H:%M')"
           git push
         else
-          echo "No changes to commit"
+          echo "No new assets to commit."
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

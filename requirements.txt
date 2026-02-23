@@ -1,3 +1,4 @@
 groq
+huggingface_hub
 requests
 python-dotenv
