@@ -1,3 +1,4 @@
+# .github/workflows/autonomy.yml (Handles scheduling)
 name: Project Chronos Autonomy Engine
 
 on:
@@ -38,7 +39,7 @@ jobs:
         git config --global user.email "chronos@vinbryyt.com"
         git add assets/ metadata/ database/ community_posts.log
         if [ -n "$(git status --porcelain)" ]; then
-          git commit -m "🤖 Chronos Update: $(date +'%Y-%m-%d %H:%M')"
+          git commit -m "🤖 [Chronos Antonomy] Update: $(date +'%Y-%m-%d %H:%M')"
           git push
         else
           echo "No new assets to commit."
