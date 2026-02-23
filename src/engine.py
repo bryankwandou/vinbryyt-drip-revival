@@ -137,7 +137,7 @@ def generate_hourly_drop():
         print(f"✅ Image saved: {img_path}")
     except Exception as e:
         print(f"HF Generation Error: {e}")
-        return
+        sys.exit(1)
 
     # 3. DRiP Metadata
     image_url = f"https://github.com/nayrbryanGaming/vinbryyt-drip-revival/blob/main/{img_path}?raw=true"
