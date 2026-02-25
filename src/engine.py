@@ -61,7 +61,6 @@ def generate_hourly_drop():
     asset_name = f"Chronos_{timestamp}"
     
     # 1. Use Groq to generate high-fidelity technical prompt
-    try:
         completion = client.chat.completions.create(
             messages=[
                 {
@@ -73,7 +72,7 @@ def generate_hourly_drop():
                     "content": f"Create a technical prompt for a {theme} visual in 8k quality with Solana purple/cyan lighting."
                 }
             ],
-            model="llama-3.3-70b-versatile",
+            model="llama3-8b-8192",
         )
         technical_prompt = completion.choices[0].message.content
     except Exception as e:
@@ -120,8 +119,7 @@ def generate_social_post():
                     "content": f"Generate a {chosen_type} (Indonesian if Pantun, English otherwise)."
                 }
             ],
-            model="llama-3.3-70b-versatile",
-        )
+            model="llama3-8b-8192",
         )
         post_content = completion.choices[0].message.content
         final_post = f"{post_content}\n\n#Solana #DRiP #VinBryYT"
