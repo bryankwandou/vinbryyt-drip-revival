@@ -1,33 +1,38 @@
 import json
 import os
 
-def generate_blink_metadata(drop_id, image_url):
+def generate_blink_metadata(asset_name, image_url):
     """
-    Generates OrbitFlare/Solana Blinks compliant action metadata.
+    Generates a Solana Actions (Blink) compliant JSON metadata.
     """
-    metadata = {
+    blink_data = {
+        "title": f"VinBryYT Revival: {asset_name}",
         "icon": image_url,
-        "title": f"VinBryYT Revival #{drop_id}",
-        "description": "Reviving digital souls on Solana. Support the autonomous artist!",
-        "label": "Collect Art",
+        "description": "Autonomous Cyber-Precision drop from Project Chronos. Support the revival.",
+        "label": "Collect Drop",
         "links": {
             "actions": [
                 {
-                    "label": "Tip Creator (0.01 SOL)",
-                    "href": f"/api/actions/tip?amount=0.01&drop={drop_id}",
-                    "parameters": []
+                    "label": "Collect (0.01 SOL)",
+                    "href": "/api/collect?amount=0.01",
                 },
                 {
-                    "label": "Collect NFT",
-                    "href": f"/api/actions/collect?drop={drop_id}",
-                    "parameters": []
+                    "label": "Tip Creator",
+                    "href": "/api/tip?amount={amount}",
+                    "parameters": [
+                        {
+                            "name": "amount",
+                            "label": "SOL Amount",
+                        }
+                    ],
                 }
             ]
         }
     }
     
-    path = os.path.join("metadata", f"actions_{drop_id}.json")
-    with open(path, 'w') as f:
-        json.dump(metadata, f, indent=4)
-    print(f"✅ Blink metadata saved to: {path}")
-    return path
+    file_path = f"metadata/blink_{asset_name.lower().replace(' ', '_')}.json"
+    with open(file_path, "w") as f:
+        json.dump(blink_data, f, indent=4)
+    
+    print(f"🔗 Blink Metadata generated: {file_path}")
+    return file_path

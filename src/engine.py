@@ -2,198 +2,119 @@ import os
 import json
 import random
 import requests
-import sys
+import time
 from datetime import datetime
 from groq import Groq
-from huggingface_hub import InferenceClient
-from pathlib import Path
+from src.blinks import generate_blink_metadata
 from dotenv import load_dotenv
-
-# Add script dir to path
-sys.path.append(str(Path(__file__).parent))
-from blinks import generate_blink_metadata
-from utils import ensure_dir
 
 load_dotenv()
 
-# API Keys
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY")
+# API Clients
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
+client = Groq(api_key=GROQ_API_KEY)
 
 # Constants
-ASSETS_DIR = "assets"
-METADATA_DIR = "metadata"
-DATABASE_DIR = "database"
-HISTORY_FILE = os.path.join(DATABASE_DIR, "history.json")
-
-# Clients
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
-hf_client = InferenceClient(token=HF_TOKEN) if HF_TOKEN else None
+HF_API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 THEMES = [
-    "Cyberpunk Landscapes",
-    "Hyper-realistic Supercars",
-    "Abstract Solana Aesthetics",
+    "Cyberpunk Landscapes", 
+    "Hyper-realistic Supercars", 
+    "Abstract Solana Aesthetics", 
     "Futuristic Architecture"
 ]
 
-def get_history():
-    if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, 'r') as f:
-            return json.load(f)
-    return {}
-
-def update_history(drop_id, theme, prompt):
-    history = get_history()
-    history[drop_id] = {
-        "timestamp": str(datetime.now()),
-        "theme": theme,
-        "prompt": prompt
-    }
-    with open(HISTORY_FILE, 'w') as f:
-        json.dump(history, f, indent=4)
-
-def generate_social_post():
-    """Generates a community post using Groq (Llama-3-8b)."""
-    if not groq_client: return "System Status: Online. #VinBryYT"
-    
-    post_types = ["Pantun (Indonesian poetry)", "Motivational Quote", "System Status Update"]
-    post_type = random.choice(post_types)
-    
-    try:
-        completion = groq_client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system", 
-                    "content": (
-                        "You are an AI community manager for VinBryYT. "
-                        "Generate a short, engaging community post (max 50 words) about 'Revival' and digital art. "
-                        "If the type is Pantun, use Indonesian. If others, use English. "
-                        "End with #Solana #DRiP #VinBryYT."
-                    )
-                },
-                {"role": "user", "content": f"Generate a {post_type} for the community."}
-            ],
-            model="llama-3.3-70b-versatile",
-        )
-        post = completion.choices[0].message.content
-        with open("community_posts.log", "a", encoding="utf-8") as f:
-            f.write(f"\n--- {datetime.now()} ---\nType: {post_type}\n{post}\n")
-        print(f"📝 Social post generated: {post_type}")
-        return post
-    except Exception as e:
-        print(f"Groq Social Error: {e}")
-        return "Reviving the past, building the future. #Solana #DRiP #VinBryYT"
+def query_hf(payload):
+    response = requests.post(HF_API_URL, headers=headers, json=payload)
+    if response.status_code != 200:
+        raise Exception(f"HF API Error: {response.text}")
+    return response.content
 
 def generate_hourly_drop():
-    """Full drop: Image + Metadata + Blinks + History."""
-    if not groq_client or not hf_client:
-        print("Required API keys missing (GROQ_API_KEY/OPENAI_API_KEY or HF_TOKEN).")
-        return
-
-    # Filter themes based on history to ensure repetition-free drops
-    history = get_history()
-    recent_themes = [h.get("theme") for h in list(history.values())[-3:]] # Last 3 themes
-    available_themes = [t for t in THEMES if t not in recent_themes]
+    """Generates an image drop: Optimized prompt -> FLUX.1 -> Metadata -> Blinks."""
+    print("🎨 Initializing Hourly Image Drop...")
+    theme = random.choice(THEMES)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    asset_name = f"Chronos_{timestamp}"
     
-    if not available_themes: available_themes = THEMES # Reset if all used
-    theme = random.choice(available_themes)
-    
-    drop_id = datetime.now().strftime("%Y%m%d_%H%M")
-    
-    print(f"🚀 Starting Hourly Drop: {theme} (ID: {drop_id})")
-
-    # 1. Groq Prompt Engineering (Llama-3-8b)
+    # 1. Use Groq to generate high-fidelity technical prompt
     try:
-        prompt_completion = groq_client.chat.completions.create(
+        completion = client.chat.completions.create(
             messages=[
                 {
-                    "role": "system", 
-                    "content": (
-                        "You are a master of technical art prompts. "
-                        "Transform the theme into a 200-word highly detailed prompt for the FLUX.1 generative model. "
-                        "Focus on 8k, zero distortion, high-fidelity visuals, cinematic lighting, and sharp textures. "
-                        "Ensure the output is JUST the prompt text."
-                    )
+                    "role": "system",
+                    "content": "You are a master technical prompt engineer for FLUX.1. Generate a 200-word cinematic, high-fidelity prompt. Focus on sharp detail, zero distortion, and cyber-precision aesthetics."
                 },
-                {"role": "user", "content": f"Theme: {theme}"}
+                {
+                    "role": "user",
+                    "content": f"Create a technical prompt for a {theme} visual in 8k quality with Solana purple/cyan lighting."
+                }
             ],
             model="llama-3.3-70b-versatile",
         )
-        technical_prompt = prompt_completion.choices[0].message.content
+        technical_prompt = completion.choices[0].message.content
     except Exception as e:
-        print(f"Groq Prompt Error: {e}")
-        technical_prompt = f"A masterpiece of {theme}, hyper-detailed digital art revival style, high fidelity, 8k"
+        print(f"Groq Error: {e}")
+        technical_prompt = f"Futuristic {theme}, 8k, cinematic lighting."
 
-    # 2. FLUX.1 Image Generation (Requests to Inference API for better compatibility)
-    try:
-        print(f"🎨 Generating image for theme: {theme}")
-        API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
-        headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-        
-        response = requests.post(API_URL, headers=headers, json={"inputs": technical_prompt})
-        
-        if response.status_code != 200:
-            print(f"HF Error: {response.status_code} - {response.text}")
-            sys.exit(1)
-            
-        img_path = os.path.join(ASSETS_DIR, f"drop_{drop_id}.png")
-        with open(img_path, "wb") as f:
-            f.write(response.content)
-            
-        print(f"✅ Image saved: {img_path}")
-    except Exception as e:
-        print(f"HF Generation Error: {e}")
-        sys.exit(1)
+    # 2. Generate Image via HF
+    print(f"🚀 Generating Asset: {asset_name} with theme: {theme}")
+    image_bytes = query_hf({"inputs": technical_prompt})
+    image_path = f"assets/{asset_name}.png"
+    with open(image_path, "wb") as f:
+        f.writelines([image_bytes])
 
-    # 3. DRiP Metadata
-    image_url = f"https://github.com/nayrbryanGaming/vinbryyt-drip-revival/blob/main/{img_path}?raw=true"
+    # 3. Create DRiP Metadata
     drip_metadata = {
-        "name": f"VinBryYT Chronos #{drop_id}",
-        "symbol": "VBRY",
-        "description": f"Theme: {theme}. Prompt: {technical_prompt[:100]}...",
-        "image": image_url,
-        "attributes": [{"trait_type": "Theme", "value": theme}],
-        "properties": {"files": [{"uri": image_url, "type": "image/png"}], "category": "image"}
+        "name": f"VinBryYT Revival #{timestamp}",
+        "symbol": "VBRV",
+        "description": f"An autonomous creative drop from Project Chronos. Theme: {theme}",
+        "image": f"https://raw.githubusercontent.com/nayrbryanGaming/vinbryyt-drip-revival/main/assets/{asset_name}.png",
+        "attributes": [{"trait_type": "Theme", "value": theme}, {"trait_type": "Engine", "value": "Project Chronos"}]
     }
-    
-    metadata_path = os.path.join(METADATA_DIR, f"metadata_{drop_id}.json")
-    with open(metadata_path, 'w') as f:
+    with open(f"metadata/{asset_name}.json", "w") as f:
         json.dump(drip_metadata, f, indent=4)
-        
-    # 4. Blinks Integration
-    generate_blink_metadata(drop_id, image_url)
-    
-    # 5. Track History
-    update_history(drop_id, theme, technical_prompt)
-    print(f"🚀 Hourly Drop #{drop_id} Complete!")
 
-def main():
-    """
-    Project Chronos Master Scheduler logic.
-    - XX:00 -> generate_hourly_drop()
-    - XX:30 -> generate_social_post()
-    """
-    ensure_dir(ASSETS_DIR)
-    ensure_dir(METADATA_DIR)
-    ensure_dir(DATABASE_DIR)
+    # 4. Generate Blinks Link
+    generate_blink_metadata(asset_name, drip_metadata["image"])
+    print(f"✅ Hourly drop complete: {image_path}")
+
+def generate_social_post():
+    """Generates a revival-themed social post using Groq."""
+    print("📝 Generating Community Post...")
+    post_types = ["Pantun", "Motivational Quote", "System Status"]
+    chosen_type = random.choice(post_types)
     
-    minute = datetime.now().minute
+    try:
+        completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are Project Chronos, an autonomous AI entity on Solana. Generate a short, cool community post relating to 'Revival' or 'Cyber-Precision'."
+                },
+                {
+                    "role": "user",
+                    "content": f"Generate a {chosen_type} (Indonesian if Pantun, English otherwise)."
+                }
+            ],
+            model="llama-3.3-70b-versatile",
+        )
+        post_content = completion.choices[0].message.content
+        final_post = f"{post_content}\n\n#Solana #DRiP #VinBryYT"
+    except Exception as e:
+        final_post = "Project Chronos is active. The revival continues. #Solana #DRiP"
+
+    with open("community_posts.log", "a", encoding="utf-8") as f:
+        f.write(f"[{datetime.now()}] {final_post}\n---\n")
     
-    # Logic for 30-minute schedule
-    # 0-15: Hourly Drop (Image + Blink)
-    # 30-45: Social Post Only
-    # Others (manual): Run both for demo purposes
-    
-    if minute < 15:
-        generate_hourly_drop()
-    elif 30 <= minute < 45:
-        generate_social_post()
-    else:
-        # Manual trigger or unexpected time: Do both for maximum yield
-        print("⚡ Manual Trigger Detected: Executing Dual Chronos Protocol")
-        generate_hourly_drop()
-        generate_social_post()
+    print(f"🤖 Social Post Generated: {final_post[:50]}...")
 
 if __name__ == "__main__":
-    main()
+    import sys
+    mode = sys.argv[1] if len(sys.argv) > 1 else "post"
+    if mode == "image":
+        generate_hourly_drop()
+    else:
+        generate_social_post()

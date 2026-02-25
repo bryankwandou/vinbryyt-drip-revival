@@ -1,5 +1,9 @@
 .env
 __pycache__/
+*.log
+database/history.json
+assets/*.png
+metadata/*.json
 *.pyc
 metadata/*.json
 assets/*.png

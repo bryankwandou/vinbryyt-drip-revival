@@ -1,49 +1,47 @@
-# .github/workflows/autonomy.yml (Handles scheduling)
-name: Project Chronos Autonomy Engine
+name: Project Chronos Autonomy
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Every 30 minutes
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
-  run-chronos:
+  autonomous-cycle:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
+    
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install Dependencies
+        run: |
+          pip install groq requests python-dotenv
 
-    - name: Execute Chronos Engine
-      env:
-        GROQ_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      run: |
-        python src/engine.py
+      - name: Check Timing & Execute
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          MINUTE=$(date +%-M)
+          if [ "$MINUTE" -le 15 ] || [ "$MINUTE" -ge 45 ]; then
+            echo "🚀 Executing Hourly Image Drop..."
+            python src/engine.py image
+          else
+            echo "📝 Executing Social Post..."
+            python src/engine.py post
+          fi
 
-    - name: Commit and Push Assets
-      run: |
-        git config --global user.name "VinBryYT-Chronos-Bot"
-        git config --global user.email "chronos@vinbryyt.com"
-        touch community_posts.log # Life insurance for git add
-        git add .
-        if [[ -n "$(git status --porcelain)" ]]; then
-          git commit -m "🤖 [Chronos Antonomy] Update: $(date +'%Y-%m-%d %H:%M')"
-          git push
-        else
-          echo "No new assets to commit."
-        fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit & Push Changes
+        run: |
+          git config --global user.name "Project Chronos"
+          git config --global user.name "chronos-bot@vinbryyt.revival"
+          git add .
+          git commit -m "🤖 [AUTONOMOUS] Project Chronos: New Revival Drop/Post [skip ci]" || echo "No changes to commit"
+          git push origin master:main --force
