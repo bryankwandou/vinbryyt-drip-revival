@@ -61,6 +61,7 @@ def generate_hourly_drop():
     asset_name = f"Chronos_{timestamp}"
     
     # 1. Use Groq to generate high-fidelity technical prompt
+    try:
         completion = client.chat.completions.create(
             messages=[
                 {
