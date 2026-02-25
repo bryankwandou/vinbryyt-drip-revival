@@ -1,12 +1,8 @@
 .env
 __pycache__/
 *.log
-database/history.json
-assets/*.png
-metadata/*.json
+database/*.json
 *.pyc
-metadata/*.json
-assets/*.png
 assets/*.jpg
 node_modules/
 .DS_Store

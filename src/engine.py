@@ -32,10 +32,31 @@ def query_hf(payload):
         raise Exception(f"HF API Error: {response.text}")
     return response.content
 
+def load_history():
+    if not os.path.exists("database/history.json"):
+        return {"image_themes": [], "last_run": None}
+    with open("database/history.json", "r") as f:
+        return json.load(f)
+
+def save_history(history):
+    with open("database/history.json", "w") as f:
+        json.dump(history, f, indent=4)
+
 def generate_hourly_drop():
     """Generates an image drop: Optimized prompt -> FLUX.1 -> Metadata -> Blinks."""
     print("🎨 Initializing Hourly Image Drop...")
-    theme = random.choice(THEMES)
+    history = load_history()
+    
+    # Theme selection logic with repetition avoidance
+    available_themes = [t for t in THEMES if t not in history["image_themes"]]
+    if not available_themes:
+        available_themes = THEMES
+        history["image_themes"] = []
+        
+    theme = random.choice(available_themes)
+    history["image_themes"].append(theme)
+    save_history(history)
+    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     asset_name = f"Chronos_{timestamp}"
     
@@ -101,6 +122,7 @@ def generate_social_post():
             ],
             model="llama-3.3-70b-versatile",
         )
+        )
         post_content = completion.choices[0].message.content
         final_post = f"{post_content}\n\n#Solana #DRiP #VinBryYT"
     except Exception as e:
@@ -113,6 +135,14 @@ def generate_social_post():
 
 if __name__ == "__main__":
     import sys
+    # Ensure database exists
+    if not os.path.exists("database"):
+        os.makedirs("database")
+    if not os.path.exists("assets"):
+        os.makedirs("assets")
+    if not os.path.exists("metadata"):
+        os.makedirs("metadata")
+        
     mode = sys.argv[1] if len(sys.argv) > 1 else "post"
     if mode == "image":
         generate_hourly_drop()
