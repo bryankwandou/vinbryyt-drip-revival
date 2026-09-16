@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          ref: main
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -42,7 +44,7 @@ jobs:
       - name: Commit & Push Changes
         run: |
           git config --global user.name "Project Chronos"
-          git config --global user.name "chronos-bot@vinbryyt.revival"
+          git config --global user.email "chronos-bot@vinbryyt.revival"
           git add .
           git commit -m "🤖 [AUTONOMOUS] Project Chronos: New Revival Drop/Post [skip ci]" || echo "No changes to commit"
-          git push origin master:main --force
+          git push origin main:main
