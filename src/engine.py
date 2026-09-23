@@ -32,14 +32,32 @@ def query_hf(payload):
         raise Exception(f"HF API Error: {response.text}")
     return response.content
 
+DEFAULT_HISTORY = {"image_themes": [], "last_run": None}
+
 def load_history():
+    # The file has been written by editors that emit UTF-16 with a BOM, which
+    # used to crash the cron. Fall back to a fresh history instead of dying:
+    # losing theme rotation for one run beats a red run every hour.
     if not os.path.exists("database/history.json"):
-        return {"image_themes": [], "last_run": None}
-    with open("database/history.json", "r") as f:
-        return json.load(f)
+        return dict(DEFAULT_HISTORY)
+    for encoding in ("utf-8-sig", "utf-16"):
+        try:
+            with open("database/history.json", "r", encoding=encoding) as f:
+                history = json.load(f)
+            break
+        except (UnicodeDecodeError, UnicodeError, json.JSONDecodeError):
+            continue
+    else:
+        print("⚠️  history.json unreadable, starting a fresh history")
+        return dict(DEFAULT_HISTORY)
+    if not isinstance(history, dict):
+        return dict(DEFAULT_HISTORY)
+    history.setdefault("image_themes", [])
+    history.setdefault("last_run", None)
+    return history
 
 def save_history(history):
-    with open("database/history.json", "w") as f:
+    with open("database/history.json", "w", encoding="utf-8") as f:
         json.dump(history, f, indent=4)
 
 def generate_hourly_drop():

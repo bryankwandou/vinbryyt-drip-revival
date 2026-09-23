@@ -27,11 +27,21 @@ jobs:
           pip install groq requests python-dotenv
 
       - name: Check Timing & Execute
+        id: cycle
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
+          # Without credentials the cycle cannot do anything useful. Skip the
+          # run instead of failing it, so a missing secret does not mail out a
+          # red run every half hour.
+          if [ -z "$GROQ_API_KEY" ] || [ -z "$HF_TOKEN" ]; then
+            echo "::warning title=Chronos idle::GROQ_API_KEY or HF_TOKEN is not set; skipping this cycle."
+            echo "ran=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ran=true" >> "$GITHUB_OUTPUT"
           MINUTE=$(date +%-M)
           if [ "$MINUTE" -le 15 ] || [ "$MINUTE" -ge 45 ]; then
             echo "🚀 Executing Hourly Image Drop..."
@@ -42,6 +52,7 @@ jobs:
           fi
 
       - name: Commit & Push Changes
+        if: steps.cycle.outputs.ran == 'true'
         run: |
           git config --global user.name "Project Chronos"
           git config --global user.email "chronos-bot@vinbryyt.revival"
